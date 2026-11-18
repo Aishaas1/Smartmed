@@ -1,0 +1,62 @@
+{
+  "rows": 27617,
+  "archive_sha256": "20a3546ff8ef252455d7308290d8ace4c3b043b0504f02bdeb7ae74b6a705d80",
+  "source_revision": "64660b26950a13289d43107a42e4b075bbb73be5",
+  "missing": {
+    "id": 0,
+    "name": 0,
+    "arabic": 5,
+    "active": 2928,
+    "company": 525,
+    "barcode": 16717,
+    "description": 1331
+  },
+  "repeated_value_groups": {
+    "id": 0,
+    "name": 16,
+    "arabic": 148,
+    "barcode": 398
+  },
+  "categories": [
+    [
+      "",
+      1331
+    ],
+    [
+      "hair care",
+      976
+    ],
+    [
+      "skin care",
+      890
+    ],
+    [
+      "multivitamin",
+      863
+    ],
+    [
+      "multivitamins",
+      501
+    ],
+    [
+      "antineoplastic",
+      436
+    ],
+    [
+      "dietary supplement",
+      351
+    ],
+    [
+      "psychiatric.antipsychotics",
+      305
+    ],
+    [
+      "antibiotic.quinolone",
+      295
+    ],
+    [
+      "peptic ulcer.proton pump inhibitor",
+      281
+    ]
+  ]
+}
