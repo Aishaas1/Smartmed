@@ -42,7 +42,7 @@ python smartmed.py import-evidence data/reviewed-evidence.jsonl
 
 ## تشغيل Windows من المتصفح
 
-نزّل `SmartMed-Windows.zip` من [إصدارات GitHub](https://github.com/Aishaas1/Smartmed/releases) وفك الضغط. الحزمة تتضمن الواجهة المبنية وملف البيانات. ثبّت [Python 3.10 أو أحدث](https://www.python.org/downloads/windows/) و[Tesseract على Windows](https://tesseract-ocr.github.io/tessdoc/Installation.html) مع الملفين `ara` و`eng` لتفعيل قراءة الصور. البحث يعمل فور استيراد البيانات.
+نزّل `SmartMed-Windows.zip` من [رابط التنزيل المباشر](https://raw.githubusercontent.com/Aishaas1/Smartmed/download-v1.1.0/SmartMed-Windows.zip) وفك الضغط. الحزمة تتضمن الواجهة المبنية وملف البيانات. ثبّت [Python 3.10 أو أحدث](https://www.python.org/downloads/windows/) و[Tesseract على Windows](https://tesseract-ocr.github.io/tessdoc/Installation.html) مع الملفين `ara` و`eng` لتفعيل قراءة الصور. البحث يعمل فور استيراد البيانات.
 
 افتح PowerShell في المجلد الذي يحتوي على `run-smartmed.ps1` وشغّل:
 
