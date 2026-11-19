@@ -1,0 +1,28 @@
+{
+  "annotations_by_split": {
+    "test": 218,
+    "train": 1010,
+    "val": 216
+  },
+  "boxes_by_split": {
+    "test": {
+      "kemasan": 138,
+      "pil": 95
+    },
+    "train": {
+      "kemasan": 632,
+      "pil": 441
+    },
+    "val": {
+      "kemasan": 129,
+      "pil": 105
+    }
+  },
+  "annotation_issues": {},
+  "source_class_names": {
+    "Kemasan": 899,
+    "Pil": 641
+  },
+  "repeated_stems_across_splits": 0,
+  "images": null
+}

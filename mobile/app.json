@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "SmartMed",
+    "slug": "smartmed",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "android": {"package": "org.smartmed.app"},
+    "plugins": [["expo-image-picker", {
+      "photosPermission": "اسمح لـ SmartMed بقراءة صورة العبوة التي تختارها.",
+      "cameraPermission": "اسمح لـ SmartMed باستخدام الكاميرا لالتقاط صورة العبوة.",
+      "microphonePermission": false
+    }]]
+  }
+}
