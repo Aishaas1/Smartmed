@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from backend import app as backend
-from backend.recognition import rank
+from backend.recognition import OCRUnavailable, rank
 from smartmed import import_egypt
 
 
@@ -54,6 +54,28 @@ class ApiTest(unittest.TestCase):
         response = self.client.post('/api/v1/recognition?country=AE', headers=self.device,
                                     files={'image': ('fake.png', b'fake', 'image/png')})
         self.assertEqual(response.status_code, 422)
+
+    def test_requested_ocr_language_and_text_without_match(self):
+        extracted = {'extracted_text': 'Unlisted label', 'ocr_languages': ['eng'],
+                     'package_detection': 'disabled', 'package_count': None}
+        with patch.object(backend, 'extract_text', return_value=extracted) as extract:
+            response = self.client.post('/api/v1/recognition?country=EG&language=eng',
+                                        headers=self.device, files={'image': ('label.png', b'fixture', 'image/png')})
+        extract.assert_called_once_with(b'fixture', 'eng')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'NOT_IDENTIFIED')
+        self.assertEqual(response.json()['extracted_text'], 'Unlisted label')
+
+    def test_ocr_setup_error_is_visible_to_the_app(self):
+        error = 'ملف لغة العربية (ara) غير متوفر'
+        with patch.object(backend, 'ocr_languages', side_effect=OCRUnavailable(error)), \
+                patch.object(backend, 'extract_text', side_effect=OCRUnavailable(error)):
+            health = self.client.get('/api/v1/health').json()
+            response = self.client.post('/api/v1/recognition?country=EG&language=ara',
+                                        headers=self.device, files={'image': ('label.png', b'fixture', 'image/png')})
+        self.assertEqual(health['ocr_error'], error)
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()['detail'], error)
 
     def test_ranking_requires_formulation_and_manufacturer(self):
         fixture = dict(trade_name='Sample', scientific_name=None,

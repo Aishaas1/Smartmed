@@ -10,9 +10,12 @@ export type Product = {
 export type Recognition = {
   id: string; status: 'IDENTIFIED' | 'NEEDS_CONFIRMATION' | 'NOT_IDENTIFIED';
   extracted_text: string; candidates: Product[]; user_selected_product?: Product;
+  ocr_languages?: string[];
 };
 export type Catalogue = { verified_products: Product[]; community_candidates?: Product[] };
-export type Health = { status: string; catalogue_records?: number; ocr_languages?: string[] };
+export type Health = {
+  status: string; catalogue_records?: number; ocr_languages?: string[]; ocr_error?: string | null;
+};
 
 export const MARKET = 'EG';
 

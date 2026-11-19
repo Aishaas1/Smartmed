@@ -6,16 +6,17 @@ import os
 from pathlib import Path
 import sqlite3
 import subprocess
+from typing import Literal
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from backend.recognition import MAX_BYTES, extract_text, ocr_languages, rank
+from backend.recognition import MAX_BYTES, OCRUnavailable, extract_text, ocr_languages, rank
 from smartmed import ARAB_MARKETS, SCHEMA, normalize, search
 
-app = FastAPI(title='SmartMed', version='1.1.0')
+app = FastAPI(title='SmartMed', version='1.2.0')
 DB = Path(os.environ.get('SMARTMED_DB', 'smartmed.sqlite'))
 API = '/api/v1'
 MARKET_DIRECTORIES = {
@@ -58,11 +59,16 @@ def verified(row):
 def health():
     with closing(database()) as db:
         catalogue_records = db.execute('SELECT COUNT(*) FROM candidates').fetchone()[0]
+    ocr_error = None
     try:
         languages = ocr_languages()
-    except (subprocess.SubprocessError, OSError):
+        if not languages:
+            ocr_error = 'ملفات لغات التعرّف غير موجودة على الكمبيوتر.'
+    except OCRUnavailable as exc:
         languages = []
-    return {'status': 'ok', 'catalogue_records': catalogue_records, 'ocr_languages': languages}
+        ocr_error = str(exc)
+    return {'status': 'ok', 'catalogue_records': catalogue_records,
+            'ocr_languages': languages, 'ocr_error': ocr_error}
 
 
 @app.get(API + '/medicines/search')
@@ -103,12 +109,15 @@ def product(product_id: str, country: str):
 
 
 @app.post(API + '/recognition')
-def recognize(country: str, image: UploadFile = File(), x_device_id: UUID = Header()):
+def recognize(country: str, image: UploadFile = File(), x_device_id: UUID = Header(),
+              language: Literal['auto', 'ara', 'eng'] = 'auto'):
     country = market(country)
     try:
-        extracted = extract_text(image.file.read(MAX_BYTES + 1))
+        extracted = extract_text(image.file.read(MAX_BYTES + 1), language)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+    except OCRUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
     except (subprocess.SubprocessError, OSError, RuntimeError, ImportError) as exc:
         raise HTTPException(503, 'تعذّرت قراءة النص من الصورة') from exc
     with closing(database()) as db, db:

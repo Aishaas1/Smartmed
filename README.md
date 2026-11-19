@@ -42,7 +42,7 @@ python smartmed.py import-evidence data/reviewed-evidence.jsonl
 
 ## تشغيل Windows من المتصفح
 
-نزّل `SmartMed-Windows.zip` من [رابط التنزيل المباشر](https://raw.githubusercontent.com/Aishaas1/Smartmed/download-v1.1.0/SmartMed-Windows.zip) وفك الضغط. الحزمة تتضمن الواجهة المبنية وملف البيانات. ثبّت [Python 3.10 أو أحدث](https://www.python.org/downloads/windows/) و[Tesseract على Windows](https://tesseract-ocr.github.io/tessdoc/Installation.html) مع الملفين `ara` و`eng` لتفعيل قراءة الصور. البحث يعمل فور استيراد البيانات.
+نزّل `SmartMed-Windows.zip` من [رابط التنزيل المباشر](https://raw.githubusercontent.com/Aishaas1/Smartmed/download-v1.2.0/SmartMed-Windows.zip) وفك الضغط. الحزمة تتضمن الواجهة المبنية وملف البيانات وملفي لغة Tesseract العربية والإنجليزية. ثبّت [Python 3.10 أو أحدث](https://www.python.org/downloads/windows/) و[Tesseract على Windows](https://tesseract-ocr.github.io/tessdoc/Installation.html) لتفعيل قراءة الصور. المشغّل يحمّل ملفات اللغة الموجودة في الحزمة. البحث يعمل فور استيراد البيانات.
 
 افتح PowerShell في المجلد الذي يحتوي على `run-smartmed.ps1` وشغّل:
 
@@ -51,7 +51,13 @@ Unblock-File .\run-smartmed.ps1
 powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\run-smartmed.ps1
 ```
 
-يفتح المشغّل المتصفح بعد جاهزية الخادم. إذا أغلقته، افتح `http://127.0.0.1:8000/` واترك نافذة PowerShell تعمل. ابحث عن «فلورويوراسيل» لتجربة الفهرس، أو اختر صورة واضحة ثم اضغط «قراءة الصورة».
+إذا لم يكن Tesseract مثبتًا، يمكنك تثبيته عبر Windows Package Manager بإضافة `-InstallOcr` لأول تشغيل:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\run-smartmed.ps1 -InstallOcr
+```
+
+يفتح المشغّل المتصفح بعد جاهزية الخادم. إذا أغلقته، افتح `http://127.0.0.1:8000/` واترك نافذة PowerShell تعمل. ابحث عن «فلورويوراسيل» لتجربة الفهرس، أو اختر صورة واضحة، وحدد لغة النص ثم اضغط «قراءة الصورة». يظهر النص حتى لو لم توجد نتيجة من الفهرس. من «لغة الصوت» اختر العربية أو English ثم اضغط «استمع للنص». النطق يستخدم الأصوات المثبتة في المتصفح أو نظام الجهاز.
 
 **إذا نزّلت كود المصدر من فرع main**، ضع `eg-drugs-main.zip` في `data/` وثبّت Node.js 22 LTS. ينشئ المشغّل حزمة المتصفح عند الحاجة. النسخة المجهزة تعمل في المتصفح دون Node.js.
 
@@ -94,3 +100,5 @@ python tools/audit_medpack.py path/to/annotations_voc.zip --images path/to/image
 ```
 
 تعتمد معايرة النموذج وتقييم OCR على صور مرخّصة وممثلة للسوق المستهدف. تظل نتائج الاختبارات البرمجية الحالية مستقلة عن أداء التعرّف على عبوات حقيقية.
+
+ملفات OCR المرفقة من [tessdata_fast 4.1.0](https://github.com/tesseract-ocr/tessdata_fast/tree/4.1.0) بموجب Apache 2.0. رخصتها مرفقة في الحزمة.

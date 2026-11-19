@@ -9,7 +9,7 @@ import subprocess
 from threading import Lock
 import unicodedata
 
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageFilter, ImageOps, UnidentifiedImageError
 
 from smartmed import normalize
 
@@ -23,11 +23,25 @@ UNIT = {'مجم': 'mg', 'ملغ': 'mg', 'مل': 'ml', 'جم': 'g'}
 DETECTOR_LOCK = Lock()
 
 
+class OCRUnavailable(RuntimeError):
+    pass
+
+
+def tesseract_command():
+    return os.environ.get('SMARTMED_TESSERACT') or 'tesseract'
+
+
 @lru_cache(maxsize=1)
 def ocr_languages():
-    result = subprocess.run(['tesseract', '--list-langs'], capture_output=True,
-                            text=True, check=True, timeout=5)
-    return [lang for lang in ('ara', 'eng') if lang in result.stdout.splitlines()]
+    try:
+        result = subprocess.run([tesseract_command(), '--list-langs'], capture_output=True,
+                                text=True, check=True, timeout=5)
+    except FileNotFoundError as exc:
+        raise OCRUnavailable('محرك Tesseract غير مثبت. ثبّته على الكمبيوتر ثم أعد تشغيل SmartMed.') from exc
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OCRUnavailable('تعذّر تشغيل Tesseract. افحص التثبيت وملفات اللغة ثم أعد تشغيل SmartMed.') from exc
+    installed = {line.strip() for line in result.stdout.splitlines()}
+    return [lang for lang in ('ara', 'eng') if lang in installed]
 
 
 @lru_cache(maxsize=1)
@@ -57,7 +71,17 @@ def package_region(image):
     return image, 'full_image', len(packages)
 
 
-def extract_text(data):
+def read_image(image, languages, layout):
+    encoded = BytesIO()
+    image.save(encoded, format='PNG')
+    result = subprocess.run(
+        [tesseract_command(), 'stdin', 'stdout', '-l', '+'.join(languages), '--psm', str(layout)],
+        input=encoded.getvalue(), capture_output=True, check=True, timeout=14,
+    )
+    return result.stdout.decode('utf-8', errors='replace').strip()
+
+
+def extract_text(data, language='auto'):
     if not data or len(data) > MAX_BYTES:
         raise ValueError('حجم الصورة خارج الحدود المسموحة')
     try:
@@ -70,18 +94,26 @@ def extract_text(data):
             image.thumbnail((2400, 2400))
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
         raise ValueError('تعذّر قراءة الصورة') from exc
-    encoded = BytesIO()
-    image, detection, package_count = package_region(image)
-    ImageOps.autocontrast(ImageOps.grayscale(image)).save(encoded, format='PNG')
     languages = ocr_languages()
+    if language != 'auto':
+        if language not in languages:
+            label = 'العربية (ara)' if language == 'ara' else 'الإنجليزية (eng)'
+            raise OCRUnavailable(f'ملف لغة {label} غير متوفر في Tesseract على الكمبيوتر.')
+        languages = [language]
     if not languages:
-        raise RuntimeError('OCR language data unavailable')
-    result = subprocess.run(
-        ['tesseract', 'stdin', 'stdout', '-l', '+'.join(languages), '--psm', '11'],
-        input=encoded.getvalue(), capture_output=True, check=True, timeout=20,
-    )
+        raise OCRUnavailable('لم يجد Tesseract ملفات اللغة ara أو eng. أعد تشغيل حزمة SmartMed بعد تجهيزها.')
+    image, detection, package_count = package_region(image)
+    if 0 < max(image.size) < 1000:
+        image = ImageOps.contain(image, (1000, 1000), Image.Resampling.LANCZOS)
+    image = ImageOps.autocontrast(ImageOps.grayscale(image))
+    text = read_image(image, languages, 11)
+    if not any(char.isalnum() for char in text):
+        enhanced = image.filter(ImageFilter.UnsharpMask(radius=1.5, percent=130, threshold=3))
+        text = read_image(enhanced, languages, 6)
+    if not any(char.isalnum() for char in text):
+        text = ''
     return {
-        'extracted_text': result.stdout.decode('utf-8', errors='replace').strip()[:6000],
+        'extracted_text': text[:6000],
         'ocr_languages': languages,
         'package_detection': detection,
         'package_count': package_count,
