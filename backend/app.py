@@ -9,12 +9,13 @@ import subprocess
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from backend.recognition import MAX_BYTES, extract_text, rank
+from backend.recognition import MAX_BYTES, extract_text, ocr_languages, rank
 from smartmed import ARAB_MARKETS, SCHEMA, normalize, search
 
-app = FastAPI(title='SmartMed', version='1.0.0')
+app = FastAPI(title='SmartMed', version='1.1.0')
 DB = Path(os.environ.get('SMARTMED_DB', 'smartmed.sqlite'))
 API = '/api/v1'
 MARKET_DIRECTORIES = {
@@ -56,8 +57,12 @@ def verified(row):
 @app.get(API + '/health')
 def health():
     with closing(database()) as db:
-        db.execute('SELECT 1 FROM candidates LIMIT 1').fetchall()
-    return {'status': 'ok'}
+        catalogue_records = db.execute('SELECT COUNT(*) FROM candidates').fetchone()[0]
+    try:
+        languages = ocr_languages()
+    except (subprocess.SubprocessError, OSError):
+        languages = []
+    return {'status': 'ok', 'catalogue_records': catalogue_records, 'ocr_languages': languages}
 
 
 @app.get(API + '/medicines/search')
@@ -157,3 +162,8 @@ def confirm(recognition_id: UUID, selection: Confirmation, x_device_id: UUID = H
         db.execute('UPDATE recognition_history SET payload=? WHERE id=? AND device=?',
                    (json.dumps(result, ensure_ascii=False), str(recognition_id), str(x_device_id)))
     return result
+
+
+web_bundle = Path(__file__).resolve().parents[1] / 'mobile' / 'dist'
+if (web_bundle / 'index.html').is_file():
+    app.mount('/', StaticFiles(directory=web_bundle, html=True), name='smartmed-web')

@@ -1,6 +1,6 @@
 # SmartMed
 
-طبقة بيانات محلية للبحث عن الأدوية بحسب السوق العربي، باستخدام Python 3.10+ وSQLite المدمجة. راجع [تقرير المصادر](docs/sources.md) و[نتائج تدقيق الأرشيف](docs/eg-drugs-audit.json).
+تطبيق يقرأ النص من صور عبوات الأدوية ويعرض المرشحات من الفهرس المصري. الواجهة العربية تعمل على أندرويد وفي متصفح الكمبيوتر، والخادم يدعم تسجيل أدلة مستقلة لكل سوق. راجع [تقرير المصادر](docs/sources.md) و[نتائج تدقيق الأرشيف](docs/eg-drugs-audit.json).
 
 ## التشغيل
 
@@ -40,36 +40,48 @@ python smartmed.py import-evidence data/reviewed-evidence.jsonl
 
 **الإسناد.** Egyptian Drug Database (eg-drugs) by Mahmoud Mohamed. بيانات المصدر مرخصة بموجب [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). يتضمن التحويل انتقاء الحقول وإزالة الفراغات الطرفية وفصل المرشحات عن الأدلة الرسمية. [المصدر الأصلي](https://github.com/mahmoudfalous/eg-drugs)
 
-## تشغيل الخادم وتطبيق أندرويد
+## تشغيل Windows من المتصفح
 
-ثبّت Python وTesseract (حزم Debian/Ubuntu المعتادة `tesseract-ocr` و`tesseract-ocr-eng` و`tesseract-ocr-ara`). إذا توفر Tesseract والإنجليزية فقط، يمكن تنزيل الملف العربي الرسمي بإصدار محدد والتحقق من checksum محليًا:
+نزّل `SmartMed-Windows.zip` من [إصدارات GitHub](https://github.com/Aishaas1/Smartmed/releases) وفك الضغط. الحزمة تتضمن الواجهة المبنية وملف البيانات. ثبّت [Python 3.10 أو أحدث](https://www.python.org/downloads/windows/) و[Tesseract على Windows](https://tesseract-ocr.github.io/tessdoc/Installation.html) مع الملفين `ara` و`eng` لتفعيل قراءة الصور. البحث يعمل فور استيراد البيانات.
 
-```sh
-bash tools/install_arabic_ocr.sh
-export TESSDATA_PREFIX="$PWD/data/tessdata"
+افتح PowerShell في المجلد الذي يحتوي على `run-smartmed.ps1` وشغّل:
+
+```powershell
+Unblock-File .\run-smartmed.ps1
+powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\run-smartmed.ps1
 ```
 
-ثم شغّل الخادم من جذر المشروع:
+يفتح المشغّل المتصفح بعد جاهزية الخادم. إذا أغلقته، افتح `http://127.0.0.1:8000/` واترك نافذة PowerShell تعمل. ابحث عن «فلورويوراسيل» لتجربة الفهرس، أو اختر صورة واضحة ثم اضغط «قراءة الصورة».
+
+**إذا نزّلت كود المصدر من فرع main**، ضع `eg-drugs-main.zip` في `data/` وثبّت Node.js 22 LTS. ينشئ المشغّل حزمة المتصفح عند الحاجة. النسخة المجهزة تعمل في المتصفح دون Node.js.
+
+## تشغيل أندرويد عبر Expo Go
+
+1. شغّل الخادم بالأمر السابق مع إضافة `-Lan`، واتركه مفتوحًا. اسمح باتصال Python على الشبكات الخاصة إذا طلب Windows ذلك.
+2. ثبّت إصدار [Expo Go المتوافق مع SDK 54](https://expo.dev/go) على الهاتف، ووصل الهاتف والكمبيوتر بنفس Wi‑Fi.
+3. افتح PowerShell ثانية في مجلد المشروع:
+
+```powershell
+cd mobile
+npm.cmd ci
+npm.cmd start
+```
+
+4. امسح QR من Expo Go. يستخدم التطبيق عنوان شبكة Expo تلقائيًا. إذا بقيت الحالة «غير متصل»، افحص عنوان الكمبيوتر بأمر `ipconfig`. اضغط شارة الاتصال في التطبيق وأدخل عنوانًا مثل `http://192.168.1.10:8000` بعد استبدال الرقم، ثم اختر «فحص وحفظ الاتصال». لمحاكي Android Studio، استخدم `http://10.0.2.2:8000`.
+5. عند تعثر الاتصال، جرّب فتح `http://عنوان-الكمبيوتر:8000/api/v1/health` من متصفح الهاتف للتحقق من الشبكة. تعرض شاشة الاتصال أيضًا ما إذا كان الفهرس مستوردًا ولغات OCR المتوفرة.
+
+## تشغيل الخادم يدويًا
+
+على Linux، ثبّت Tesseract وملفات اللغة `ara` و`eng` عبر مدير الحزم. يمكن استخدام `bash tools/install_arabic_ocr.sh` و`export TESSDATA_PREFIX="$PWD/data/tessdata"` إذا توفرت الإنجليزية فقط.
 
 ```sh
 python -m pip install -r requirements.txt
 python smartmed.py import-eg data/eg-drugs-main.zip
 python -m unittest discover -s tests
-python -m uvicorn backend.app:app --host 0.0.0.0 --port 8000
+python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
 ```
 
-تتوفر صفحة OpenAPI على `/docs` وفحص الصحة على `/api/v1/health`. الخادم مخصص للتطوير المحلي. سجل التعرف مرتبط بمعرّف عشوائي خاص بالجهاز. إذا استُضيف خارج شبكة تطوير خاصة، يلزم إضافة مصادقة وحدود للطلبات وHTTPS. تُحفظ نتائج OCR محليًا في SQLite.
-
-في طرفية ثانية:
-
-```sh
-cd mobile
-npm ci
-npm run typecheck
-npm start
-```
-
-الإعداد الافتراضي `http://10.0.2.2:8000` لمحاكي Android. للهاتف الفعلي، شغّل Expo على شبكة التطوير واضبط `EXPO_PUBLIC_SMARTMED_API_URL` على عنوان الخادم القابل للوصول من الهاتف. يعرض التطبيق السوق، البحث، التقاط صورة أو اختيارها، النتائج، الأدلة، قراءة صوتية من الهاتف، السجل، واختيار المرشح.
+لبناء واجهة المتصفح من المصدر، نفّذ `npm ci` ثم `npm run build:web` داخل `mobile` قبل بدء الخادم. يتوفر توثيق API على `/docs` وفحص الصحة على `/api/v1/health`. سجل التعرّف محفوظ محليًا في SQLite ومرتبط بمعرّف الجهاز. استخدم الخادم محليًا أو على شبكة تطوير خاصة.
 
 ## التعرف والبيانات البصرية
 

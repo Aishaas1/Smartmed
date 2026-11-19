@@ -1,17 +1,30 @@
 {
   "name": "smartmed-mobile",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "main": "expo/AppEntry",
-  "scripts": {"start": "expo start", "typecheck": "tsc --noEmit"},
+  "scripts": {
+    "start": "expo start",
+    "typecheck": "tsc --noEmit",
+    "build:web": "expo export --platform web"
+  },
   "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "@expo/vector-icons": "^15.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~54.0.33",
+    "expo-constants": "~18.0.13",
     "expo-crypto": "~15.0.8",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.10",
     "expo-speech": "~14.0.8",
-    "@react-native-async-storage/async-storage": "2.2.0",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-dom": "^19.1.0",
+    "react-native": "0.81.5",
+    "react-native-web": "^0.21.4"
   },
-  "devDependencies": {"@types/react": "~19.1.0", "typescript": "~5.9.2"}
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.2"
+  }
 }
